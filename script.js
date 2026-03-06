@@ -1,0 +1,56 @@
+document.getElementById("csvFile").addEventListener("change", function(e){
+
+const file = e.target.files[0];
+
+Papa.parse(file,{
+header:true,
+complete:function(results){
+
+let data = results.data;
+
+let totalBytes = 0;
+let vmMap = {};
+let driveMap = {};
+let largest = [];
+
+data.forEach(row => {
+
+let size = parseInt(row.SizeBytes || 0);
+
+totalBytes += size;
+
+vmMap[row.Hostname] = (vmMap[row.Hostname] || 0) + size;
+driveMap[row.Drive] = (driveMap[row.Drive] || 0) + size;
+
+largest.push({
+host: row.Hostname,
+file: row.FileName,
+size: size
+});
+
+});
+
+let totalGB = totalBytes / (1024*1024*1024);
+
+document.getElementById("totalSize").innerHTML =
+"Total Backup Size: " + totalGB.toFixed(2) + " GB";
+
+document.getElementById("totalVMs").innerHTML =
+"Total VMs: " + Object.keys(vmMap).length;
+
+document.getElementById("totalFiles").innerHTML =
+"Total Files: " + data.length;
+
+largest.sort((a,b)=>b.size-a.size);
+
+document.getElementById("largestBackup").innerHTML =
+"Largest Backup: " + (largest[0].size/1073741824).toFixed(2) + " GB";
+
+buildVMChart(vmMap);
+buildDriveChart(driveMap);
+buildLargestTable(largest.slice(0,10));
+
+}
+});
+
+});
