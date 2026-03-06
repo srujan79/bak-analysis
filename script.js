@@ -1,68 +1,85 @@
-body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f4f6f9;
-    margin: 30px 20px;
+document.getElementById("csvFile").addEventListener("change", function(e) {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+        complete: function(results) {
+            let data = results.data;
+
+            if (data.length === 0) {
+                alert("CSV loaded but no rows found. Check headers.");
+                return;
+            }
+
+            buildDashboard(data);
+        }
+    });
+});
+
+function buildDashboard(data) {
+    let totalBytes = 0;
+    let vmMap = {};
+    let driveMap = {};
+    let largest = [];
+
+    data.forEach(row => {
+        let size = row.SizeBytes || 0;
+        totalBytes += size;
+        vmMap[row.Hostname] = (vmMap[row.Hostname] || 0) + size;
+        driveMap[row.Drive] = (driveMap[row.Drive] || 0) + size;
+        largest.push({ host: row.Hostname, file: row.FileName, size: size });
+    });
+
+    document.getElementById("totalSize").innerText = (totalBytes/1073741824).toFixed(2) + " GB";
+    document.getElementById("totalVMs").innerText = Object.keys(vmMap).length;
+    document.getElementById("totalFiles").innerText = data.length;
+
+    largest.sort((a,b)=>b.size-a.size);
+    document.getElementById("largestBackup").innerText = (largest[0].size/1073741824).toFixed(2) + " GB";
+
+    buildVMChart(vmMap);
+    buildDriveChart(driveMap);
+    buildLargestTable(largest.slice(0,10));
 }
 
-.header {
-    margin-bottom: 15px;
+let vmChartInstance, driveChartInstance;
+
+function buildVMChart(vmMap) {
+    const labels = Object.keys(vmMap);
+    const values = Object.values(vmMap).map(v => v / 1073741824);
+
+    if(vmChartInstance) vmChartInstance.destroy();
+
+    vmChartInstance = new Chart(document.getElementById("vmChart"), {
+        type: 'bar',
+        data: { labels: labels, datasets: [{ label: "Storage (GB)", data: values, backgroundColor: "rgba(54,162,235,0.6)" }] },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
 }
 
-.header h1 { margin-bottom: 5px; font-size: 1.8rem; }
+function buildDriveChart(driveMap) {
+    const labels = Object.keys(driveMap);
+    const values = Object.values(driveMap).map(v => v / 1073741824);
 
-.metrics {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    if(driveChartInstance) driveChartInstance.destroy();
+
+    driveChartInstance = new Chart(document.getElementById("driveChart"), {
+        type: 'pie',
+        data: { labels: labels, datasets: [{ data: values, backgroundColor: ["#3498db","#2ecc71","#f1c40f","#e74c3c"] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
 }
 
-.card {
-    background: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    flex: 1 1 180px;
-    min-width: 140px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    text-align: center;
+function buildLargestTable(files) {
+    const tbody = document.querySelector("#largestTable tbody");
+    tbody.innerHTML = "";
+    files.forEach(f => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${f.host}</td><td>${f.file}</td><td>${(f.size/1073741824).toFixed(2)}</td>`;
+        tbody.appendChild(row);
+    });
 }
-
-.card h3 { margin-bottom: 8px; font-size: 1.1rem; }
-
-.dashboard {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-top: 25px;
-}
-
-.chart-container {
-    background: white;
-    padding: 15px 20px;
-    border-radius: 8px;
-    flex: 1 1 48%;
-    height: 250px;          /* fixed height */
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-}
-
-.chart-container h3 { margin: 0 0 8px 0; font-size: 1.1rem; }
-
-canvas { flex-grow: 1; width: 100% !important; height: 100% !important; }
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background: white;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    font-size: 0.9rem;
-}
-
-thead { background: #2c3e50; color: white; }
-
-th, td { padding: 8px 10px; border-bottom: 1px solid #ddd; text-align: left; }
-
-tr:hover { background: #f1f1f1; }
