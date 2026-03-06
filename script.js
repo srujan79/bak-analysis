@@ -56,23 +56,14 @@ function buildVMChart(vmMap){
 let labels = Object.keys(vmMap);
 let values = Object.values(vmMap).map(v=>v/1073741824);
 
-new Chart(document.getElementById("vmChart"),{
-
-type:'bar',
-
-data:{
-labels:labels,
-datasets:[{
-label:"Storage (GB)",
-data:values,
-backgroundColor:"rgba(54,162,235,0.6)"
-}]
-},
-
-options:{
-responsive:true,
-maintainAspectRatio:false
-}
+new Chart(ctx, {
+    type: 'bar', // or 'pie'
+    data: { ... },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false, // critical
+    }
+});
 
 });
 
