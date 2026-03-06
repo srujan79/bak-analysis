@@ -54,3 +54,22 @@ buildLargestTable(largest.slice(0,10));
 });
 
 });
+
+function buildVMChart(vmMap){
+
+let labels = Object.keys(vmMap);
+let values = Object.values(vmMap).map(v=>v/1073741824);
+
+new Chart(document.getElementById("vmChart"),{
+type:'bar',
+data:{
+labels:labels,
+datasets:[{
+label:"Storage GB",
+data:values,
+backgroundColor:"rgba(54,162,235,0.6)"
+}]
+}
+});
+
+}
