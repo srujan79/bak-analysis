@@ -1,81 +1,65 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
-<title>Backup Storage Analytics Dashboard</title>
-
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<meta charset="UTF-8">
+<title>Backup Analytics Dashboard</title>
 <link rel="stylesheet" href="style.css">
 
+<!-- Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
 <div class="header">
-<h1>Backup Storage Analytics Dashboard</h1>
-<p>Upload a backup scan CSV to analyze storage usage across servers</p>
+  <h1>Backup Analytics Dashboard</h1>
+  <p>Upload your Master_Bak_Report.csv to analyze backup storage</p>
 </div>
 
-<input type="file" id="csvFile">
+<input type="file" id="csvFile" accept=".csv">
 
 <div class="metrics">
-
-<div class="card">
-<h3>Total Backup Size</h3>
-<p id="totalSize"></p>
-</div>
-
-<div class="card">
-<h3>Total VMs</h3>
-<p id="totalVMs"></p>
-</div>
-
-<div class="card">
-<h3>Total Files</h3>
-<p id="totalFiles"></p>
-</div>
-
-<div class="card">
-<h3>Largest Backup</h3>
-<p id="largestBackup"></p>
-</div>
-
+  <div class="card">
+    <h3>Total Backup Size</h3>
+    <p id="totalSize">0 GB</p>
+  </div>
+  <div class="card">
+    <h3>Total VMs</h3>
+    <p id="totalVMs">0</p>
+  </div>
+  <div class="card">
+    <h3>Total Files</h3>
+    <p id="totalFiles">0</p>
+  </div>
+  <div class="card">
+    <h3>Largest Backup</h3>
+    <p id="largestBackup">0 GB</p>
+  </div>
 </div>
 
 <div class="dashboard">
-
-<div class="chart-container">
-<h3>Storage by VM</h3>
-<canvas id="vmChart"></canvas>
-</div>
-
-<div class="chart-container">
-<h3>Storage by Drive</h3>
-<canvas id="driveChart"></canvas>
-</div>
-
+  <div class="chart-container">
+    <h3>Storage by VM</h3>
+    <canvas id="vmChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <h3>Storage by Drive</h3>
+    <canvas id="driveChart"></canvas>
+  </div>
 </div>
 
 <h2>Top 10 Largest Backup Files</h2>
-
 <table id="largestTable">
-
-<thead>
-<tr>
-<th>Hostname</th>
-<th>File</th>
-<th>Size (GB)</th>
-</tr>
-</thead>
-
-<tbody></tbody>
-
+  <thead>
+    <tr>
+      <th>Hostname</th>
+      <th>File Name</th>
+      <th>Size (GB)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
 </table>
 
 <script src="script.js"></script>
-
 </body>
 </html>
