@@ -129,3 +129,33 @@ tbody.appendChild(row);
 });
 
 }
+
+options: {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      labels: {
+        font: {
+          size: 12
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      ticks: {
+        font: {
+          size: 11
+        }
+      }
+    },
+    y: {
+      ticks: {
+        font: {
+          size: 11
+        }
+      }
+    }
+  }
+}
