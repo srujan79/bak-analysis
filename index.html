@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Backup Analysis</title>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+
+<body>
+
+<h2>Upload Backup CSV</h2>
+
+<input type="file" id="upload">
+
+<div id="result"></div>
+
+<script>
+
+document.getElementById('upload').addEventListener('change', function(e){
+
+const file = e.target.files[0];
+
+Papa.parse(file,{
+header:true,
+complete:function(results){
+
+let data = results.data;
+
+let totalBytes = 0;
+
+data.forEach(row=>{
+totalBytes += parseInt(row.SizeBytes || 0);
+});
+
+let totalGB = totalBytes / (1024*1024*1024);
+
+document.getElementById("result").innerHTML =
+"<h3>Total Backup Size: " + totalGB.toFixed(2) + " GB</h3>";
+
+}
+});
+
+});
+
+</script>
+
+</body>
+</html>
