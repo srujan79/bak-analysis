@@ -73,3 +73,39 @@ backgroundColor:"rgba(54,162,235,0.6)"
 });
 
 }
+
+function buildDriveChart(driveMap){
+
+let labels = Object.keys(driveMap);
+let values = Object.values(driveMap).map(v=>v/1073741824);
+
+new Chart(document.getElementById("driveChart"),{
+type:'pie',
+data:{
+labels:labels,
+datasets:[{
+data:values
+}]
+}
+});
+
+}
+
+function buildLargestTable(files){
+
+let tbody = document.querySelector("#largestTable tbody");
+
+files.forEach(f =>{
+
+let row = document.createElement("tr");
+
+row.innerHTML =
+"<td>"+f.host+"</td>" +
+"<td>"+f.file+"</td>" +
+"<td>"+(f.size/1073741824).toFixed(2)+"</td>";
+
+tbody.appendChild(row);
+
+});
+
+}
