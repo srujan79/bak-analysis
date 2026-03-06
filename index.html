@@ -3,7 +3,7 @@
 
 <head>
 
-<title>Backup Storage Analyzer</title>
+<title>Backup Storage Analytics Dashboard</title>
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,33 +14,59 @@
 
 <body>
 
-<h1>Upload Backup CSV</h1>
+<div class="header">
+<h1>Backup Storage Analytics Dashboard</h1>
+<p>Upload a backup scan CSV to analyze storage usage across servers</p>
+</div>
 
 <input type="file" id="csvFile">
 
 <div class="metrics">
 
-<div id="totalSize"></div>
-<div id="totalVMs"></div>
-<div id="totalFiles"></div>
-<div id="largestBackup"></div>
+<div class="card">
+<h3>Total Backup Size</h3>
+<p id="totalSize"></p>
+</div>
+
+<div class="card">
+<h3>Total VMs</h3>
+<p id="totalVMs"></p>
+</div>
+
+<div class="card">
+<h3>Total Files</h3>
+<p id="totalFiles"></p>
+</div>
+
+<div class="card">
+<h3>Largest Backup</h3>
+<p id="largestBackup"></p>
+</div>
 
 </div>
 
-<h2>Storage by VM</h2>
+<div class="dashboard">
+
+<div class="chart-container">
+<h3>Storage by VM</h3>
 <canvas id="vmChart"></canvas>
+</div>
 
-<h2>Storage by Drive</h2>
+<div class="chart-container">
+<h3>Storage by Drive</h3>
 <canvas id="driveChart"></canvas>
+</div>
 
-<h2>Largest Backup Files</h2>
+</div>
+
+<h2>Top 10 Largest Backup Files</h2>
 
 <table id="largestTable">
 
 <thead>
 <tr>
 <th>Hostname</th>
-<th>FileName</th>
+<th>File</th>
 <th>Size (GB)</th>
 </tr>
 </thead>
