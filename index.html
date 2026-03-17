@@ -1,65 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Backup Analytics Dashboard</title>
-<link rel="stylesheet" href="style.css">
+<title>Storage Analysis Dashboard</title>
 
-<!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fluentui/web-components/dist/fluentui.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+<style>
+body {
+font-family: "Segoe UI", Arial;
+background:#f5f5f5;
+margin:40px;
+}
+
+.card {
+background:white;
+padding:20px;
+margin-bottom:20px;
+border-radius:8px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+h1 {
+color:#0078D4;
+}
+
+</style>
+
 </head>
+
 <body>
 
-<div class="header">
-  <h1>Backup Analytics Dashboard</h1>
-  <p>Upload your Master_Bak_Report.csv to analyze backup storage</p>
-</div>
+<h1>Storage Analysis Dashboard</h1>
 
+<div class="card">
 <input type="file" id="csvFile" accept=".csv">
-
-<div class="metrics">
-  <div class="card">
-    <h3>Total Backup Size</h3>
-    <p id="totalSize">0 GB</p>
-  </div>
-  <div class="card">
-    <h3>Total VMs</h3>
-    <p id="totalVMs">0</p>
-  </div>
-  <div class="card">
-    <h3>Total Files</h3>
-    <p id="totalFiles">0</p>
-  </div>
-  <div class="card">
-    <h3>Largest Backup</h3>
-    <p id="largestBackup">0 GB</p>
-  </div>
 </div>
 
-<div class="dashboard">
-  <div class="chart-container">
-    <h3>Storage by VM</h3>
-    <canvas id="vmChart"></canvas>
-  </div>
-  <div class="chart-container">
-    <h3>Storage by Drive</h3>
-    <canvas id="driveChart"></canvas>
-  </div>
+<div class="card">
+<h3>Total .BAK Files by Drive</h3>
+<canvas id="driveChart"></canvas>
 </div>
 
-<h2>Top 10 Largest Backup Files</h2>
-<table id="largestTable">
-  <thead>
-    <tr>
-      <th>Hostname</th>
-      <th>File Name</th>
-      <th>Size (GB)</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div class="card">
+<h3>Top Servers by BAK File Count</h3>
+<canvas id="serverChart"></canvas>
+</div>
 
-<script src="script.js"></script>
+<script src="app.js"></script>
+
 </body>
 </html>
