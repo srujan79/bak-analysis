@@ -4,14 +4,14 @@ function parseCustomDate(dateStr) {
     dateStr = dateStr.trim().replace(/\uFEFF/g, ""); // remove BOM
     if (!dateStr) return null;
 
-    // 1️⃣ Try DD-MM-YYYY HH:mm
+    // DD-MM-YYYY HH:mm
     let dmyMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/);
     if (dmyMatch) {
         let [, day, month, year, hour, minute] = dmyMatch;
         return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
     }
 
-    // 2️⃣ Try MM/DD/YYYY hh:mm AM/PM
+    // MM/DD/YYYY hh:mm AM/PM
     let mdyMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
     if (mdyMatch) {
         let [, month, day, year, hourRaw, minute, ampm] = mdyMatch;
@@ -21,9 +21,15 @@ function parseCustomDate(dateStr) {
         return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hour.toString().padStart(2, "0")}:${minute}:00`);
     }
 
-    // 3️⃣ Fallback to Date constructor
     let d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
+}
+
+// 🔹 Extract customer from hostname "abc-cus-xyz" → "cus"
+function extractCustomer(hostname) {
+    let parts = hostname.split("-");
+    if (parts.length >= 3) return parts[1];
+    return "Unknown";
 }
 
 // 📦 Initialize DataTable once
@@ -43,7 +49,6 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
         header: true,
         skipEmptyLines: true,
         complete: function (results) {
-            // Clean headers and values
             let data = results.data
                 .map((row) => {
                     let cleanRow = {};
@@ -53,7 +58,10 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
                     });
                     return cleanRow;
                 })
-                .filter((r) => r.Hostname); // only rows with Hostname
+                .filter((r) => r.Hostname);
+
+            // Add customer field
+            data.forEach(r => { r.Customer = extractCustomer(r.Hostname); });
 
             processData(data);
             populateTable(data);
@@ -64,12 +72,14 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
 // 📊 Data Processing
 function processData(data) {
     let servers = new Set();
+    let customers = new Set();
     let totalFiles = data.length;
     let totalStorage = 0;
     let largest = 0;
 
     let driveUsage = {};
     let serverUsage = {};
+    let customerUsage = {};
     let sizeBuckets = { "0-10MB": 0, "10-100MB": 0, "100MB-1GB": 0, "1GB+": 0 };
     let ageBuckets = { "0-30d": 0, "30-90d": 0, "90-365d": 0, "1y+": 0 };
 
@@ -77,6 +87,7 @@ function processData(data) {
 
     data.forEach((r) => {
         servers.add(r.Hostname);
+        customers.add(r.Customer);
 
         let size = parseInt(r.SizeBytes) || 0;
         totalStorage += size;
@@ -89,6 +100,10 @@ function processData(data) {
         // Server usage
         if (!serverUsage[r.Hostname]) serverUsage[r.Hostname] = 0;
         serverUsage[r.Hostname] += size;
+
+        // Customer usage
+        if (!customerUsage[r.Customer]) customerUsage[r.Customer] = 0;
+        customerUsage[r.Customer] += size;
 
         // Size buckets
         if (size < 10_000_000) sizeBuckets["0-10MB"]++;
@@ -109,6 +124,7 @@ function processData(data) {
 
     // KPI update
     document.getElementById("totalServers").innerText = servers.size;
+    document.getElementById("totalCustomers").innerText = customers.size;
     document.getElementById("totalFiles").innerText = totalFiles;
     document.getElementById("totalStorage").innerText = (totalStorage / 1073741824).toFixed(2) + " GB";
     document.getElementById("largestFile").innerText = (largest / 1073741824).toFixed(2) + " GB";
@@ -118,11 +134,11 @@ function processData(data) {
     createChart("serverChart", "Top Servers", serverUsage);
     createChart("sizeChart", "Backup Size Distribution", sizeBuckets);
     createChart("ageChart", "Backup Age Distribution", ageBuckets);
+    createChart("customerChart", "Storage by Customer", customerUsage);
 }
 
 // 📈 Chart Builder
 function createChart(id, title, data) {
-    // Destroy old chart if exists
     if (charts[id]) charts[id].destroy();
 
     charts[id] = new Chart(document.getElementById(id), {
@@ -157,6 +173,7 @@ function populateTable(data) {
 
         table.row.add([
             r.Hostname,
+            r.Customer,
             r.PrivateIP,
             r.Drive,
             r.FileName,
