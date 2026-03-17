@@ -21,6 +21,7 @@ function parseCustomDate(dateStr) {
         return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hour.toString().padStart(2, "0")}:${minute}:00`);
     }
 
+    // Fallback
     let d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
 }
@@ -129,12 +130,20 @@ function processData(data) {
     document.getElementById("totalStorage").innerText = (totalStorage / 1073741824).toFixed(2) + " GB";
     document.getElementById("largestFile").innerText = (largest / 1073741824).toFixed(2) + " GB";
 
+    // Convert storage metrics to GB for charts
+    let driveUsageGB = {};
+    let serverUsageGB = {};
+    let customerUsageGB = {};
+    for (let k in driveUsage) driveUsageGB[k] = +(driveUsage[k] / 1073741824).toFixed(2);
+    for (let k in serverUsage) serverUsageGB[k] = +(serverUsage[k] / 1073741824).toFixed(2);
+    for (let k in customerUsage) customerUsageGB[k] = +(customerUsage[k] / 1073741824).toFixed(2);
+
     // Charts
-    createChart("driveChart", "Storage by Drive", driveUsage);
-    createChart("serverChart", "Top Servers", serverUsage);
+    createChart("driveChart", "Storage by Drive (GB)", driveUsageGB);
+    createChart("serverChart", "Top Servers (GB)", serverUsageGB);
     createChart("sizeChart", "Backup Size Distribution", sizeBuckets);
     createChart("ageChart", "Backup Age Distribution", ageBuckets);
-    createChart("customerChart", "Storage by Customer", customerUsage);
+    createChart("customerChart", "Storage by Customer (GB)", customerUsageGB);
 }
 
 // 📈 Chart Builder
@@ -145,13 +154,11 @@ function createChart(id, title, data) {
         type: "bar",
         data: {
             labels: Object.keys(data),
-            datasets: [
-                {
-                    label: title,
-                    data: Object.values(data),
-                    backgroundColor: "#0078D4",
-                },
-            ],
+            datasets: [{
+                label: title,
+                data: Object.values(data),
+                backgroundColor: "#0078D4",
+            }],
         },
         options: {
             responsive: true,
@@ -159,6 +166,20 @@ function createChart(id, title, data) {
                 legend: { display: false },
                 title: { display: true, text: title },
             },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            // Append "GB" only for storage charts
+                            if (id === "driveChart" || id === "serverChart" || id === "customerChart") {
+                                return value + " GB";
+                            }
+                            return value;
+                        }
+                    }
+                }
+            }
         },
     });
 }
