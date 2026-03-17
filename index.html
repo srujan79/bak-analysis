@@ -31,6 +31,11 @@
 </div>
 
 <div class="kpi">
+<h3>Total Customers</h3>
+<p id="totalCustomers">0</p>
+</div>
+
+<div class="kpi">
 <h3>Total BAK Files</h3>
 <p id="totalFiles">0</p>
 </div>
@@ -63,12 +68,17 @@
 <canvas id="ageChart"></canvas>
 </div>
 
+<div class="chart-container">
+<canvas id="customerChart"></canvas>
+</div>
+
 <h2>Backup Files Table</h2>
 
 <table id="dataTable" class="display">
 <thead>
 <tr>
 <th>Hostname</th>
+<th>Customer</th>
 <th>PrivateIP</th>
 <th>Drive</th>
 <th>FileName</th>
