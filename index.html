@@ -19,7 +19,7 @@
 
 <div class="header">
   <h1>Storage Analysis Dashboard</h1>
-  <span class="credit">Designed by Srujan Garde at VitalEdge Technologies</span>
+  <span class="credit">Designed by Srujan Garde at Parkview Technologies</span>
 </div>
 
 <div class="upload">
@@ -55,25 +55,11 @@
 
 </div>
 
-<div class="chart-container">
-<canvas id="driveChart"></canvas>
-</div>
-
-<div class="chart-container">
-<canvas id="serverChart"></canvas>
-</div>
-
-<div class="chart-container">
-<canvas id="sizeChart"></canvas>
-</div>
-
-<div class="chart-container">
-<canvas id="ageChart"></canvas>
-</div>
-
-<div class="chart-container">
-<canvas id="customerChart"></canvas>
-</div>
+<div class="chart-container"><canvas id="driveChart"></canvas></div>
+<div class="chart-container"><canvas id="serverChart"></canvas></div>
+<div class="chart-container"><canvas id="sizeChart"></canvas></div>
+<div class="chart-container"><canvas id="ageChart"></canvas></div>
+<div class="chart-container"><canvas id="customerChart"></canvas></div>
 
 <h2>Backup Files Table</h2>
 
@@ -86,8 +72,19 @@
 <th>Drive</th>
 <th>FileName</th>
 <th>FullPath</th>
-<th>SizeBytes</th>
+<th>Size (GB)</th>
 <th>LastModified</th>
+</tr>
+
+<tr>
+<th><input type="text" placeholder="Search Hostname"></th>
+<th><input type="text" placeholder="Search Customer"></th>
+<th><input type="text" placeholder="Search IP"></th>
+<th><input type="text" placeholder="Search Drive"></th>
+<th><input type="text" placeholder="Search File"></th>
+<th><input type="text" placeholder="Search Path"></th>
+<th><input type="text" placeholder="Search Size"></th>
+<th><input type="text" placeholder="Search Date"></th>
 </tr>
 </thead>
 <tbody></tbody>
