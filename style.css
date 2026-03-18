@@ -4,7 +4,6 @@ body{
   margin:40px;
 }
 
-/* 🔷 Header */
 .header{
   display:flex;
   justify-content:space-between;
@@ -22,12 +21,10 @@ h1{
   color:#777;
 }
 
-/* 📂 Upload */
 .upload{
   margin-bottom:20px;
 }
 
-/* 📊 KPI Cards */
 .kpi-container{
   display:flex;
   gap:20px;
@@ -53,7 +50,6 @@ h1{
   color:#0078D4;
 }
 
-/* 📈 Charts */
 .chart-container{
   background:white;
   padding:20px;
@@ -62,7 +58,14 @@ h1{
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* 📋 Table */
 table{
   background:white;
+}
+
+/* 🔍 Filter inputs */
+thead input {
+  width: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  font-size: 12px;
 }
