@@ -1,48 +1,46 @@
-// 🔧 Flexible Date Parser
 function parseCustomDate(dateStr) {
     if (!dateStr) return null;
-    dateStr = dateStr.trim().replace(/\uFEFF/g, ""); // remove BOM
+    dateStr = dateStr.trim().replace(/\uFEFF/g, "");
     if (!dateStr) return null;
 
-    // DD-MM-YYYY HH:mm
     let dmyMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/);
     if (dmyMatch) {
         let [, day, month, year, hour, minute] = dmyMatch;
         return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
     }
 
-    // MM/DD/YYYY hh:mm AM/PM
-    let mdyMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-    if (mdyMatch) {
-        let [, month, day, year, hourRaw, minute, ampm] = mdyMatch;
-        let hour = parseInt(hourRaw, 10);
-        if (ampm.toUpperCase() === "PM" && hour < 12) hour += 12;
-        if (ampm.toUpperCase() === "AM" && hour === 12) hour = 0;
-        return new Date(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hour.toString().padStart(2, "0")}:${minute}:00`);
-    }
-
-    // Fallback
     let d = new Date(dateStr);
     return isNaN(d.getTime()) ? null : d;
 }
 
-// 🔹 Extract customer from hostname "abc-cus-xyz" → "cus"
 function extractCustomer(hostname) {
     let parts = hostname.split("-");
     if (parts.length >= 3) return parts[1];
     return "Unknown";
 }
 
-// 📦 Initialize DataTable once
 let table;
-$(document).ready(function () {
-    table = $("#dataTable").DataTable();
-});
-
-// 🔄 Charts storage
 let charts = {};
 
-// 📥 CSV Upload
+$(document).ready(function () {
+    table = $("#dataTable").DataTable({
+        orderCellsTop: true,
+        initComplete: function () {
+            let api = this.api();
+
+            api.columns().every(function (colIdx) {
+                let cell = $('.display thead tr:eq(1) th').eq(colIdx);
+
+                $('input', cell).on('keyup change', function () {
+                    if (api.column(colIdx).search() !== this.value) {
+                        api.column(colIdx).search(this.value).draw();
+                    }
+                });
+            });
+        }
+    });
+});
+
 document.getElementById("csvFile").addEventListener("change", function (e) {
     let file = e.target.files[0];
 
@@ -61,7 +59,6 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
                 })
                 .filter((r) => r.Hostname);
 
-            // Add customer field
             data.forEach(r => { r.Customer = extractCustomer(r.Hostname); });
 
             processData(data);
@@ -70,19 +67,12 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
     });
 });
 
-// 📊 Data Processing
 function processData(data) {
     let servers = new Set();
     let customers = new Set();
     let totalFiles = data.length;
     let totalStorage = 0;
     let largest = 0;
-
-    let driveUsage = {};
-    let serverUsage = {};
-    let customerUsage = {};
-    let sizeBuckets = { "0-10MB": 0, "10-100MB": 0, "100MB-1GB": 0, "1GB+": 0 };
-    let ageBuckets = { "0-30d": 0, "30-90d": 0, "90-365d": 0, "1y+": 0 };
 
     let today = new Date();
 
@@ -93,104 +83,22 @@ function processData(data) {
         let size = parseInt(r.SizeBytes) || 0;
         totalStorage += size;
         if (size > largest) largest = size;
-
-        // Drive usage
-        if (!driveUsage[r.Drive]) driveUsage[r.Drive] = 0;
-        driveUsage[r.Drive] += size;
-
-        // Server usage
-        if (!serverUsage[r.Hostname]) serverUsage[r.Hostname] = 0;
-        serverUsage[r.Hostname] += size;
-
-        // Customer usage
-        if (!customerUsage[r.Customer]) customerUsage[r.Customer] = 0;
-        customerUsage[r.Customer] += size;
-
-        // Size buckets
-        if (size < 10_000_000) sizeBuckets["0-10MB"]++;
-        else if (size < 100_000_000) sizeBuckets["10-100MB"]++;
-        else if (size < 1_000_000_000) sizeBuckets["100MB-1GB"]++;
-        else sizeBuckets["1GB+"]++;
-
-        // Age buckets
-        let d = parseCustomDate(r.LastModified ? r.LastModified.trim() : "");
-        if (d) {
-            let diff = (today - d) / (1000 * 60 * 60 * 24); // days
-            if (diff < 30) ageBuckets["0-30d"]++;
-            else if (diff < 90) ageBuckets["30-90d"]++;
-            else if (diff < 365) ageBuckets["90-365d"]++;
-            else ageBuckets["1y+"]++;
-        }
     });
 
-    // KPI update
     document.getElementById("totalServers").innerText = servers.size;
     document.getElementById("totalCustomers").innerText = customers.size;
     document.getElementById("totalFiles").innerText = totalFiles;
     document.getElementById("totalStorage").innerText = (totalStorage / 1073741824).toFixed(2) + " GB";
     document.getElementById("largestFile").innerText = (largest / 1073741824).toFixed(2) + " GB";
-
-    // Convert storage metrics to GB for charts
-    let driveUsageGB = {};
-    let serverUsageGB = {};
-    let customerUsageGB = {};
-    for (let k in driveUsage) driveUsageGB[k] = +(driveUsage[k] / 1073741824).toFixed(2);
-    for (let k in serverUsage) serverUsageGB[k] = +(serverUsage[k] / 1073741824).toFixed(2);
-    for (let k in customerUsage) customerUsageGB[k] = +(customerUsage[k] / 1073741824).toFixed(2);
-
-    // Charts
-    createChart("driveChart", "Storage by Drive (GB)", driveUsageGB);
-    createChart("serverChart", "Top Servers (GB)", serverUsageGB);
-    createChart("sizeChart", "Backup Size Distribution", sizeBuckets);
-    createChart("ageChart", "Backup Age Distribution", ageBuckets);
-    createChart("customerChart", "Storage by Customer (GB)", customerUsageGB);
 }
 
-// 📈 Chart Builder
-function createChart(id, title, data) {
-    if (charts[id]) charts[id].destroy();
-
-    charts[id] = new Chart(document.getElementById(id), {
-        type: "bar",
-        data: {
-            labels: Object.keys(data),
-            datasets: [{
-                label: title,
-                data: Object.values(data),
-                backgroundColor: "#0078D4",
-            }],
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: title },
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            // Append "GB" only for storage charts
-                            if (id === "driveChart" || id === "serverChart" || id === "customerChart") {
-                                return value + " GB";
-                            }
-                            return value;
-                        }
-                    }
-                }
-            }
-        },
-    });
-}
-
-// 📋 Table
 function populateTable(data) {
     table.clear();
 
     data.forEach((r) => {
-        let sizeFormatted = r.SizeBytes ? formatBytes(parseInt(r.SizeBytes)) : "0 B";
-        let lastModified = r.LastModified ? r.LastModified.trim() : "N/A";
+        let sizeGB = r.SizeBytes
+            ? (parseInt(r.SizeBytes) / 1073741824).toFixed(2)
+            : "0.00";
 
         table.row.add([
             r.Hostname,
@@ -199,19 +107,10 @@ function populateTable(data) {
             r.Drive,
             r.FileName,
             r.FullPath,
-            sizeFormatted,
-            lastModified,
+            sizeGB,
+            r.LastModified || "N/A",
         ]);
     });
 
     table.draw();
-}
-
-// 🔢 Format bytes nicely
-function formatBytes(bytes) {
-    if (bytes === 0) return "0 B";
-    let k = 1024;
-    let sizes = ["B", "KB", "MB", "GB", "TB"];
-    let i = Math.floor(Math.log(bytes) / Math.log(k));
-    return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
 }
