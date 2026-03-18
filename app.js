@@ -15,8 +15,7 @@ function parseCustomDate(dateStr) {
 
 function extractCustomer(hostname) {
     let parts = hostname.split("-");
-    if (parts.length >= 3) return parts[1];
-    return "Unknown";
+    return parts.length >= 3 ? parts[1] : "Unknown";
 }
 
 let table;
@@ -27,14 +26,10 @@ $(document).ready(function () {
         orderCellsTop: true,
         initComplete: function () {
             let api = this.api();
-
             api.columns().every(function (colIdx) {
                 let cell = $('.display thead tr:eq(1) th').eq(colIdx);
-
                 $('input', cell).on('keyup change', function () {
-                    if (api.column(colIdx).search() !== this.value) {
-                        api.column(colIdx).search(this.value).draw();
-                    }
+                    api.column(colIdx).search(this.value).draw();
                 });
             });
         }
@@ -59,7 +54,7 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
                 })
                 .filter((r) => r.Hostname);
 
-            data.forEach(r => { r.Customer = extractCustomer(r.Hostname); });
+            data.forEach(r => r.Customer = extractCustomer(r.Hostname));
 
             processData(data);
             populateTable(data);
@@ -74,7 +69,9 @@ function processData(data) {
     let totalStorage = 0;
     let largest = 0;
 
-    let today = new Date();
+    let driveUsage = {};
+    let serverUsage = {};
+    let customerUsage = {};
 
     data.forEach((r) => {
         servers.add(r.Hostname);
@@ -83,6 +80,10 @@ function processData(data) {
         let size = parseInt(r.SizeBytes) || 0;
         totalStorage += size;
         if (size > largest) largest = size;
+
+        driveUsage[r.Drive] = (driveUsage[r.Drive] || 0) + size;
+        serverUsage[r.Hostname] = (serverUsage[r.Hostname] || 0) + size;
+        customerUsage[r.Customer] = (customerUsage[r.Customer] || 0) + size;
     });
 
     document.getElementById("totalServers").innerText = servers.size;
@@ -90,6 +91,41 @@ function processData(data) {
     document.getElementById("totalFiles").innerText = totalFiles;
     document.getElementById("totalStorage").innerText = (totalStorage / 1073741824).toFixed(2) + " GB";
     document.getElementById("largestFile").innerText = (largest / 1073741824).toFixed(2) + " GB";
+
+    convertAndChart("driveChart", "Storage by Drive (GB)", driveUsage);
+    convertAndChart("serverChart", "Top Servers (GB)", serverUsage);
+    convertAndChart("customerChart", "Storage by Customer (GB)", customerUsage);
+}
+
+function convertAndChart(id, title, data) {
+    let converted = {};
+    for (let k in data) {
+        converted[k] = +(data[k] / 1073741824).toFixed(2);
+    }
+    createChart(id, title, converted);
+}
+
+function createChart(id, title, data) {
+    if (charts[id]) charts[id].destroy();
+
+    charts[id] = new Chart(document.getElementById(id), {
+        type: "bar",
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                label: title,
+                data: Object.values(data),
+                backgroundColor: "#0078D4"
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: title }
+            }
+        }
+    });
 }
 
 function populateTable(data) {
@@ -108,7 +144,7 @@ function populateTable(data) {
             r.FileName,
             r.FullPath,
             sizeGB,
-            r.LastModified || "N/A",
+            r.LastModified || "N/A"
         ]);
     });
 
