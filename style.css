@@ -69,3 +69,17 @@ thead input {
   box-sizing: border-box;
   font-size: 12px;
 }
+
+#downloadCsv{
+  background:#0078D4;
+  color:white;
+  padding:10px 15px;
+  border:none;
+  border-radius:5px;
+  margin-bottom:15px;
+  cursor:pointer;
+}
+
+#downloadCsv:hover{
+  background:#005fa3;
+}
