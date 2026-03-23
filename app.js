@@ -55,6 +55,8 @@ $(document).ready(function () {
         $("#sizeFilter").toggle(currentColumn == 6);
 
         $("#filterPopup").css({ top: e.pageY, left: e.pageX }).show();
+
+        $("#filterSearch").val(""); // ✅ ADDED (reset search like Excel)
     });
 });
 
@@ -78,13 +80,13 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
 
             data.forEach(r => r.Customer = extractCustomer(r.Hostname));
 
-            processData(data);   // ✅ now exists
+            processData(data);
             populateTable(data);
         }
     });
 });
 
-// 📊 DATA PROCESSING (RESTORED)
+// 📊 DATA PROCESSING
 function processData(data) {
     let servers = new Set();
     let customers = new Set();
@@ -145,7 +147,7 @@ function processData(data) {
     createChart("ageChart", "Backup Age Distribution", ageBuckets);
 }
 
-// 📈 Chart Builder (RESTORED)
+// 📈 Chart Builder
 function createChart(id, title, data) {
     if (charts[id]) charts[id].destroy();
 
@@ -237,9 +239,58 @@ $("#applyFilter").click(function(){
 // CHIPS
 function renderChips(list){
     $("#selectedValues").html(list.map(v =>
-        `<div class="selected-chip">${v}<span>✖</span></div>`
+        `<div class="selected-chip">${v}<span data-value="${v}">✖</span></div>`
     ).join(""));
 }
+
+// ================= ✅ ADDED FEATURES =================
+
+// 🔍 Live search filter
+$("#filterSearch").on("keyup", function () {
+    let search = $(this).val().toLowerCase();
+
+    $("#filterValues div").each(function () {
+        let text = $(this).text().toLowerCase();
+        $(this).toggle(text.includes(search));
+    });
+});
+
+// ✅ Select All
+$("#selectAll").click(function () {
+    $("#filterValues input[type='checkbox']").prop("checked", true).trigger("change");
+});
+
+// ❌ Clear All
+$("#clearAll").click(function () {
+    $("#filterValues input[type='checkbox']").prop("checked", false).trigger("change");
+});
+
+// 🔄 Update chips dynamically
+$(document).on("change", "#filterValues input[type='checkbox']", function () {
+    let selected = $("#filterValues input:checked")
+        .map(function () { return this.value; })
+        .get();
+
+    renderChips(selected);
+});
+
+// ❌ Remove chip
+$(document).on("click", ".selected-chip span", function () {
+    let value = $(this).data("value");
+
+    $(`#filterValues input[value="${value}"]`)
+        .prop("checked", false)
+        .trigger("change");
+});
+
+// ❌ Close popup on outside click
+$(document).click(function (e) {
+    if (!$(e.target).closest("#filterPopup, #dataTable thead th").length) {
+        $("#filterPopup").hide();
+    }
+});
+
+// ================= END =================
 
 // DOWNLOAD
 document.getElementById("downloadCsv").addEventListener("click", function () {
