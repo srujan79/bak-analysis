@@ -1,102 +1,98 @@
-body{
-  font-family:"Segoe UI";
-  background:#f5f5f5;
-  margin:40px;
-}
+// Existing code unchanged above...
 
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
+let table;
+let charts = {};
 
-h1{
-  color:#0078D4;
-  margin:0;
-}
+let activeFilters = {};
+let currentColumn = null;
 
-.credit{
-  font-size:13px;
-  color:#777;
-}
+$(document).ready(function () {
+    table = $("#dataTable").DataTable({
+        orderCellsTop: true,
+        initComplete: function () {
+            let api = this.api();
+            api.columns().every(function (colIdx) {
+                let cell = $('.display thead tr:eq(1) th').eq(colIdx);
+                $('input', cell).on('keyup change', function () {
+                    api.column(colIdx).search(this.value).draw();
+                });
+            });
+        }
+    });
+});
 
-.upload{
-  margin-bottom:20px;
-}
+// FILTER BUTTON CLICK
+$(document).on("click", ".filter-btn", function (e) {
+    currentColumn = $(this).data("col");
 
-.kpi-container{
-  display:flex;
-  gap:20px;
-  margin-bottom:30px;
-}
+    let columnData = table.column(currentColumn).data().toArray();
+    let uniqueValues = [...new Set(columnData)].sort();
 
-.kpi{
-  background:white;
-  padding:20px;
-  border-radius:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
-  flex:1;
-  text-align:center;
-}
+    let html = "";
+    uniqueValues.forEach(val => {
+        html += `
+            <div>
+                <label>
+                    <input type="checkbox" value="${val}">
+                    ${val}
+                </label>
+            </div>
+        `;
+    });
 
-.kpi p{
-  font-size:28px;
-  color:#0078D4;
-}
+    $("#filterValues").html(html);
 
-.chart-container{
-  background:white;
-  padding:20px;
-  margin-bottom:30px;
-  border-radius:8px;
-}
+    $("#filterPopup")
+        .css({ top: e.pageY + "px", left: e.pageX + "px" })
+        .show();
+});
 
-thead input {
-  width: 100%;
-  padding: 4px;
-  font-size: 12px;
-}
+// SEARCH INSIDE FILTER
+$("#filterSearch").on("keyup", function () {
+    let val = $(this).val().toLowerCase();
+    $("#filterValues div").filter(function () {
+        $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+    });
+});
 
-#downloadCsv{
-  background:#0078D4;
-  color:white;
-  padding:10px 15px;
-  border:none;
-  border-radius:5px;
-  margin-bottom:15px;
-  cursor:pointer;
-}
+// SELECT ALL
+$("#selectAll").on("click", function () {
+    $("#filterValues input").prop("checked", true);
+});
 
-#downloadCsv:hover{
-  background:#005fa3;
-}
+// CLEAR ALL
+$("#clearAll").on("click", function () {
+    $("#filterValues input").prop("checked", false);
+});
 
-/* FILTER UI */
-.filter-btn {
-  cursor: pointer;
-  font-size: 12px;
-  margin-left: 5px;
-}
+// APPLY FILTER
+$("#applyFilter").on("click", function () {
+    let selected = [];
+    $("#filterValues input:checked").each(function () {
+        selected.push($(this).val());
+    });
 
-.filter-popup {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  padding: 10px;
-  width: 260px;
-  z-index: 1000;
-  box-shadow:0 2px 10px rgba(0,0,0,0.2);
-}
+    let mode = $("input[name='mode']:checked").val();
 
-#filterValues {
-  max-height: 150px;
-  overflow-y: auto;
-  margin: 10px 0;
-}
+    activeFilters[currentColumn] = { selected, mode };
 
-.controls{
-  display:flex;
-  gap:5px;
-  margin:5px 0;
-}
+    $("#filterPopup").hide();
+    table.draw();
+});
+
+// CUSTOM FILTER LOGIC
+$.fn.dataTable.ext.search.push(function (settings, data) {
+    for (let col in activeFilters) {
+        let filter = activeFilters[col];
+        let cellValue = data[col];
+
+        if (!filter.selected.length) continue;
+
+        if (filter.mode === "include") {
+            if (!filter.selected.includes(cellValue)) return false;
+        } else {
+            if (filter.selected.includes(cellValue)) return false;
+        }
+    }
+    return true;
+});
