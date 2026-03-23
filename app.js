@@ -1,47 +1,21 @@
-// 🔧 Date Parser
-function parseCustomDate(dateStr) {
-    if (!dateStr) return null;
-    dateStr = dateStr.trim().replace(/\uFEFF/g, "");
-    if (!dateStr) return null;
-
-    let dmyMatch = dateStr.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2})$/);
-    if (dmyMatch) {
-        let [, day, month, year, hour, minute] = dmyMatch;
-        return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
-    }
-
-    let d = new Date(dateStr);
-    return isNaN(d.getTime()) ? null : d;
-}
-
-// 🔹 Customer extract
-function extractCustomer(hostname) {
-    let parts = hostname.split("-");
-    return parts.length >= 3 ? parts[1] : "Unknown";
-}
-
 let table;
-let charts = {};
 let activeFilters = {};
 let currentColumn = null;
 
-// INIT TABLE
 $(document).ready(function () {
     table = $("#dataTable").DataTable({
-        orderCellsTop: true,
-        initComplete: function () {
-            let api = this.api();
-            api.columns().every(function (colIdx) {
-                let cell = $('.display thead tr:eq(1) th').eq(colIdx);
-                $('input', cell).on('keyup change', function () {
-                    api.column(colIdx).search(this.value).draw();
-                });
-            });
-        }
+        orderCellsTop: true
+    });
+
+    // column search
+    $('#dataTable thead tr:eq(1) th').each(function (i) {
+        $('input', this).on('keyup change', function () {
+            table.column(i).search(this.value).draw();
+        });
     });
 });
 
-// CSV UPLOAD
+// CSV LOAD
 document.getElementById("csvFile").addEventListener("change", function (e) {
     let file = e.target.files[0];
 
@@ -49,232 +23,103 @@ document.getElementById("csvFile").addEventListener("change", function (e) {
         header: true,
         skipEmptyLines: true,
         complete: function (results) {
-            let data = results.data
-                .map(row => {
-                    let clean = {};
-                    Object.keys(row).forEach(k => {
-                        let key = k.trim();
-                        clean[key] = row[k]?.trim();
-                    });
-                    return clean;
-                })
-                .filter(r => r.Hostname);
+            let data = results.data;
+            table.clear();
 
-            data.forEach(r => r.Customer = extractCustomer(r.Hostname));
+            data.forEach(r => {
+                table.row.add([
+                    r.Hostname,
+                    r.Customer,
+                    r.PrivateIP,
+                    r.Drive,
+                    r.FileName,
+                    r.FullPath,
+                    (r.SizeBytes/1073741824).toFixed(2),
+                    r.LastModified
+                ]);
+            });
 
-            processData(data);
-            populateTable(data);
+            table.draw();
         }
     });
 });
 
-// PROCESS DATA
-function processData(data) {
-    let servers = new Set();
-    let customers = new Set();
-    let totalFiles = data.length;
-    let totalStorage = 0;
-    let largest = 0;
-
-    let driveUsage = {}, serverUsage = {}, customerUsage = {};
-    let sizeBuckets = { "0-10MB": 0, "10-100MB": 0, "100MB-1GB": 0, "1GB+": 0 };
-    let ageBuckets = { "0-30d": 0, "30-90d": 0, "90-365d": 0, "1y+": 0 };
-
-    let today = new Date();
-
-    data.forEach(r => {
-        servers.add(r.Hostname);
-        customers.add(r.Customer);
-
-        let size = parseInt(r.SizeBytes) || 0;
-        totalStorage += size;
-        if (size > largest) largest = size;
-
-        driveUsage[r.Drive] = (driveUsage[r.Drive] || 0) + size;
-        serverUsage[r.Hostname] = (serverUsage[r.Hostname] || 0) + size;
-        customerUsage[r.Customer] = (customerUsage[r.Customer] || 0) + size;
-
-        if (size < 10_000_000) sizeBuckets["0-10MB"]++;
-        else if (size < 100_000_000) sizeBuckets["10-100MB"]++;
-        else if (size < 1_000_000_000) sizeBuckets["100MB-1GB"]++;
-        else sizeBuckets["1GB+"]++;
-
-        let d = parseCustomDate(r.LastModified);
-        if (d) {
-            let diff = (today - d) / (1000 * 60 * 60 * 24);
-            if (diff < 30) ageBuckets["0-30d"]++;
-            else if (diff < 90) ageBuckets["30-90d"]++;
-            else if (diff < 365) ageBuckets["90-365d"]++;
-            else ageBuckets["1y+"]++;
-        }
-    });
-
-    document.getElementById("totalServers").innerText = servers.size;
-    document.getElementById("totalCustomers").innerText = customers.size;
-    document.getElementById("totalFiles").innerText = totalFiles;
-    document.getElementById("totalStorage").innerText = (totalStorage / 1073741824).toFixed(2) + " GB";
-    document.getElementById("largestFile").innerText = (largest / 1073741824).toFixed(2) + " GB";
-
-    createChart("driveChart", "Storage by Drive (GB)", convertGB(driveUsage));
-    createChart("serverChart", "Top Servers (GB)", convertGB(serverUsage));
-    createChart("customerChart", "Storage by Customer (GB)", convertGB(customerUsage));
-    createChart("sizeChart", "Backup Size Distribution", sizeBuckets);
-    createChart("ageChart", "Backup Age Distribution", ageBuckets);
-}
-
-function convertGB(obj){
-    let res = {};
-    for (let k in obj) res[k] = +(obj[k]/1073741824).toFixed(2);
-    return res;
-}
-
-// CHART
-function createChart(id, title, data) {
-    if (charts[id]) charts[id].destroy();
-
-    charts[id] = new Chart(document.getElementById(id), {
-        type: "bar",
-        data: {
-            labels: Object.keys(data),
-            datasets: [{
-                data: Object.values(data),
-                backgroundColor: "#0078D4"
-            }]
-        },
-        options: {
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: title }
-            }
-        }
-    });
-}
-
-// TABLE
-function populateTable(data) {
-    table.clear();
-
-    data.forEach(r => {
-        let sizeGB = (parseInt(r.SizeBytes)/1073741824).toFixed(2);
-
-        table.row.add([
-            r.Hostname,
-            r.Customer,
-            r.PrivateIP,
-            r.Drive,
-            r.FileName,
-            r.FullPath,
-            sizeGB,
-            r.LastModified || "N/A"
-        ]);
-    });
-
-    table.draw();
-}
-
-// FILTER UI WITH MEMORY
+// OPEN FILTER
 $(document).on("click", ".filter-btn", function (e) {
     currentColumn = $(this).data("col");
 
-    let columnData = table.column(currentColumn).data().toArray();
-    let uniqueValues = [...new Set(columnData)].sort();
+    let values = [...new Set(table.column(currentColumn).data().toArray())].sort();
+    let existing = activeFilters[currentColumn] || { selected: [], mode: "include" };
 
-    let existingFilter = activeFilters[currentColumn] || { selected: [], mode: "include" };
+    $(`input[name="mode"][value="${existing.mode}"]`).prop("checked", true);
 
-    // Restore mode
-    $(`input[name="mode"][value="${existingFilter.mode}"]`).prop("checked", true);
+    $("#filterValues").html(values.map(v =>
+        `<div><label><input type="checkbox" value="${v}" ${existing.selected.includes(v) ? "checked":""}> ${v}</label></div>`
+    ).join(""));
 
-    let html = "";
+    renderChips(existing.selected);
 
-    uniqueValues.forEach(val => {
-        let checked = existingFilter.selected.includes(val) ? "checked" : "";
-        html += `
-            <div>
-                <label>
-                    <input type="checkbox" value="${val}" ${checked}>
-                    ${val}
-                </label>
-            </div>
-        `;
-    });
-
-    $("#filterValues").html(html);
-
-    $("#filterPopup")
-        .css({ top: e.pageY + "px", left: e.pageX + "px" })
-        .show();
+    $("#filterPopup").css({ top:e.pageY, left:e.pageX }).show();
 });
 
+// CHIPS
+function renderChips(list){
+    $("#selectedValues").html(list.map(v =>
+        `<div class="selected-chip">${v}<span data-v="${v}">✖</span></div>`
+    ).join(""));
+}
 
-// SEARCH INSIDE FILTER
+// REMOVE CHIP
+$(document).on("click",".selected-chip span",function(){
+    let v=$(this).data("v");
+    $(`#filterValues input[value="${v}"]`).prop("checked",false);
+    $(this).parent().remove();
+});
+
+// SEARCH
 $("#filterSearch").on("keyup", function () {
-    let val = $(this).val().toLowerCase();
-    $("#filterValues div").filter(function () {
-        $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
+    let val=this.value.toLowerCase();
+    $("#filterValues div").each(function(){
+        $(this).toggle($(this).text().toLowerCase().includes(val));
     });
 });
 
+// SELECT / CLEAR
+$("#selectAll").click(()=>$("#filterValues input:visible").prop("checked",true));
+$("#clearAll").click(()=>{ $("#filterValues input").prop("checked",false); $("#selectedValues").empty(); });
 
-// SELECT ALL (respects current filter list)
-$("#selectAll").on("click", function () {
-    $("#filterValues input:visible").prop("checked", true);
-});
+// APPLY
+$("#applyFilter").click(function(){
+    let selected=$("#filterValues input:checked").map(function(){return this.value}).get();
+    let mode=$("input[name='mode']:checked").val();
 
-
-// CLEAR ALL
-$("#clearAll").on("click", function () {
-    $("#filterValues input").prop("checked", false);
-});
-
-
-// APPLY FILTER (STORE MEMORY)
-$("#applyFilter").on("click", function () {
-    let selected = [];
-
-    $("#filterValues input:checked").each(function () {
-        selected.push($(this).val());
-    });
-
-    let mode = $("input[name='mode']:checked").val();
-
-    activeFilters[currentColumn] = { selected, mode };
-
+    activeFilters[currentColumn]={selected,mode};
     $("#filterPopup").hide();
     table.draw();
 });
 
-
-// CUSTOM FILTER LOGIC
+// FILTER LOGIC
 $.fn.dataTable.ext.search.push(function (settings, data) {
     for (let col in activeFilters) {
-        let filter = activeFilters[col];
-        let cellValue = data[col];
+        let f = activeFilters[col];
+        if (!f.selected.length) continue;
 
-        if (!filter.selected.length) continue;
-
-        if (filter.mode === "include") {
-            if (!filter.selected.includes(cellValue)) return false;
-        } else {
-            if (filter.selected.includes(cellValue)) return false;
-        }
+        if (f.mode==="include" && !f.selected.includes(data[col])) return false;
+        if (f.mode==="exclude" && f.selected.includes(data[col])) return false;
     }
     return true;
 });
 
-// DOWNLOAD CSV
-document.getElementById("downloadCsv").addEventListener("click", function () {
-    let data = table.rows({ search: 'applied' }).data();
-    let csv = [];
+// DOWNLOAD
+document.getElementById("downloadCsv").onclick=function(){
+    let rows=table.rows({search:'applied'}).data();
+    let csv=[];
 
-    csv.push(["Hostname","Customer","PrivateIP","Drive","FileName","FullPath","Size (GB)","LastModified"].join(","));
+    rows.each(r=>csv.push(r.join(",")));
 
-    data.each(row => {
-        csv.push(row.map(v => `"${v}"`).join(","));
-    });
-
-    let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "filtered.csv";
+    let blob=new Blob([csv.join("\n")]);
+    let a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="filtered.csv";
     a.click();
-});
+};
