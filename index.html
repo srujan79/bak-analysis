@@ -12,7 +12,6 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
 </head>
 
 <body>
@@ -47,14 +46,14 @@
 <table id="dataTable" class="display">
 <thead>
 <tr>
-<th><span class="col-title">Hostname</span> 🔽</th>
-<th><span class="col-title">Customer</span> 🔽</th>
-<th><span class="col-title">PrivateIP</span> 🔽</th>
-<th><span class="col-title">Drive</span> 🔽</th>
-<th><span class="col-title">FileName</span> 🔽</th>
-<th><span class="col-title">FullPath</span> 🔽</th>
-<th><span class="col-title">Size (GB)</span> 🔽</th>
-<th><span class="col-title">LastModified</span> 🔽</th>
+<th><span class="col-title">Hostname</span></th>
+<th><span class="col-title">Customer</span></th>
+<th><span class="col-title">PrivateIP</span></th>
+<th><span class="col-title">Drive</span></th>
+<th><span class="col-title">FileName</span></th>
+<th><span class="col-title">FullPath</span></th>
+<th><span class="col-title">Size (GB)</span></th>
+<th><span class="col-title">LastModified</span></th>
 </tr>
 
 <tr>
@@ -71,7 +70,7 @@
 <tbody></tbody>
 </table>
 
-<!-- 🔥 FILTER POPUP -->
+<!-- FILTER POPUP -->
 <div id="filterPopup" class="filter-popup" style="display:none;">
 <input type="text" id="filterSearch" placeholder="Search...">
 
@@ -101,5 +100,6 @@
 </div>
 
 <script src="app.js"></script>
+
 </body>
 </html>
