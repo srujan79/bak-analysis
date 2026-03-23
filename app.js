@@ -172,35 +172,69 @@ function populateTable(data) {
     table.draw();
 }
 
-// FILTER UI
+// FILTER UI WITH MEMORY
 $(document).on("click", ".filter-btn", function (e) {
     currentColumn = $(this).data("col");
 
-    let values = [...new Set(table.column(currentColumn).data().toArray())].sort();
+    let columnData = table.column(currentColumn).data().toArray();
+    let uniqueValues = [...new Set(columnData)].sort();
 
-    let html = values.map(v =>
-        `<div><label><input type="checkbox" value="${v}"> ${v}</label></div>`
-    ).join("");
+    let existingFilter = activeFilters[currentColumn] || { selected: [], mode: "include" };
+
+    // Restore mode
+    $(`input[name="mode"][value="${existingFilter.mode}"]`).prop("checked", true);
+
+    let html = "";
+
+    uniqueValues.forEach(val => {
+        let checked = existingFilter.selected.includes(val) ? "checked" : "";
+        html += `
+            <div>
+                <label>
+                    <input type="checkbox" value="${val}" ${checked}>
+                    ${val}
+                </label>
+            </div>
+        `;
+    });
 
     $("#filterValues").html(html);
 
     $("#filterPopup")
-        .css({ top: e.pageY, left: e.pageX })
+        .css({ top: e.pageY + "px", left: e.pageX + "px" })
         .show();
 });
 
+
+// SEARCH INSIDE FILTER
 $("#filterSearch").on("keyup", function () {
-    let val = this.value.toLowerCase();
-    $("#filterValues div").each(function () {
-        $(this).toggle($(this).text().toLowerCase().includes(val));
+    let val = $(this).val().toLowerCase();
+    $("#filterValues div").filter(function () {
+        $(this).toggle($(this).text().toLowerCase().indexOf(val) > -1);
     });
 });
 
-$("#selectAll").click(() => $("#filterValues input").prop("checked", true));
-$("#clearAll").click(() => $("#filterValues input").prop("checked", false));
 
-$("#applyFilter").click(function () {
-    let selected = $("#filterValues input:checked").map(function(){ return this.value; }).get();
+// SELECT ALL (respects current filter list)
+$("#selectAll").on("click", function () {
+    $("#filterValues input:visible").prop("checked", true);
+});
+
+
+// CLEAR ALL
+$("#clearAll").on("click", function () {
+    $("#filterValues input").prop("checked", false);
+});
+
+
+// APPLY FILTER (STORE MEMORY)
+$("#applyFilter").on("click", function () {
+    let selected = [];
+
+    $("#filterValues input:checked").each(function () {
+        selected.push($(this).val());
+    });
+
     let mode = $("input[name='mode']:checked").val();
 
     activeFilters[currentColumn] = { selected, mode };
@@ -209,13 +243,20 @@ $("#applyFilter").click(function () {
     table.draw();
 });
 
+
+// CUSTOM FILTER LOGIC
 $.fn.dataTable.ext.search.push(function (settings, data) {
     for (let col in activeFilters) {
-        let f = activeFilters[col];
-        if (!f.selected.length) continue;
+        let filter = activeFilters[col];
+        let cellValue = data[col];
 
-        if (f.mode === "include" && !f.selected.includes(data[col])) return false;
-        if (f.mode === "exclude" && f.selected.includes(data[col])) return false;
+        if (!filter.selected.length) continue;
+
+        if (filter.mode === "include") {
+            if (!filter.selected.includes(cellValue)) return false;
+        } else {
+            if (filter.selected.includes(cellValue)) return false;
+        }
     }
     return true;
 });
