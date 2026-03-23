@@ -40,11 +40,6 @@ h1{
   text-align:center;
 }
 
-.kpi h3{
-  margin:0;
-  color:#555;
-}
-
 .kpi p{
   font-size:28px;
   color:#0078D4;
@@ -55,18 +50,11 @@ h1{
   padding:20px;
   margin-bottom:30px;
   border-radius:8px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-table{
-  background:white;
-}
-
-/* 🔍 Filter inputs */
 thead input {
   width: 100%;
   padding: 4px;
-  box-sizing: border-box;
   font-size: 12px;
 }
 
@@ -82,4 +70,33 @@ thead input {
 
 #downloadCsv:hover{
   background:#005fa3;
+}
+
+/* FILTER UI */
+.filter-btn {
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.filter-popup {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  width: 260px;
+  z-index: 1000;
+  box-shadow:0 2px 10px rgba(0,0,0,0.2);
+}
+
+#filterValues {
+  max-height: 150px;
+  overflow-y: auto;
+  margin: 10px 0;
+}
+
+.controls{
+  display:flex;
+  gap:5px;
+  margin:5px 0;
 }
