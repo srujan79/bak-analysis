@@ -255,9 +255,11 @@ $("#filterSearch").on("keyup", function () {
     });
 });
 
-// ✅ Select All
+// ✅ Select ONLY visible (filtered) values
 $("#selectAll").click(function () {
-    $("#filterValues input[type='checkbox']").prop("checked", true).trigger("change");
+    $("#filterValues div:visible input[type='checkbox']")
+        .prop("checked", true)
+        .trigger("change");
 });
 
 // ❌ Clear All
