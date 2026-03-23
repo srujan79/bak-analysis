@@ -12,16 +12,19 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+
 </head>
 
 <body>
 
 <div class="header">
   <h1>Storage Analysis Dashboard</h1>
-  <span class="credit">Created by Srujan Garde</span>
+  <span class="credit">Created by Srujan Garde at VitalEdge Technologies</span>
 </div>
 
+<div class="upload">
 <input type="file" id="csvFile" accept=".csv">
+</div>
 
 <div class="kpi-container">
 <div class="kpi"><h3>Total Servers</h3><p id="totalServers">0</p></div>
@@ -32,21 +35,26 @@
 </div>
 
 <div class="chart-container"><canvas id="driveChart"></canvas></div>
+<div class="chart-container"><canvas id="serverChart"></canvas></div>
+<div class="chart-container"><canvas id="sizeChart"></canvas></div>
+<div class="chart-container"><canvas id="ageChart"></canvas></div>
+<div class="chart-container"><canvas id="customerChart"></canvas></div>
 
 <h2>Backup Files Table</h2>
+
 <button id="downloadCsv">Download Filtered CSV</button>
 
 <table id="dataTable" class="display">
 <thead>
 <tr>
-<th>Hostname <span class="filter-btn" data-col="0">🔽</span></th>
-<th>Customer <span class="filter-btn" data-col="1">🔽</span></th>
-<th>PrivateIP <span class="filter-btn" data-col="2">🔽</span></th>
-<th>Drive <span class="filter-btn" data-col="3">🔽</span></th>
-<th>FileName <span class="filter-btn" data-col="4">🔽</span></th>
-<th>FullPath <span class="filter-btn" data-col="5">🔽</span></th>
-<th>Size (GB) <span class="filter-btn" data-col="6">🔽</span></th>
-<th>LastModified <span class="filter-btn" data-col="7">🔽</span></th>
+<th><span class="col-title">Hostname</span> 🔽</th>
+<th><span class="col-title">Customer</span> 🔽</th>
+<th><span class="col-title">PrivateIP</span> 🔽</th>
+<th><span class="col-title">Drive</span> 🔽</th>
+<th><span class="col-title">FileName</span> 🔽</th>
+<th><span class="col-title">FullPath</span> 🔽</th>
+<th><span class="col-title">Size (GB)</span> 🔽</th>
+<th><span class="col-title">LastModified</span> 🔽</th>
 </tr>
 
 <tr>
@@ -63,12 +71,21 @@
 <tbody></tbody>
 </table>
 
-<!-- FILTER POPUP -->
+<!-- 🔥 FILTER POPUP -->
 <div id="filterPopup" class="filter-popup" style="display:none;">
 <input type="text" id="filterSearch" placeholder="Search...">
 
-<div class="selected-title">Selected</div>
 <div id="selectedValues"></div>
+
+<div id="dateFilter">
+<label>From: <input type="date" id="dateFrom"></label>
+<label>To: <input type="date" id="dateTo"></label>
+</div>
+
+<div id="sizeFilter">
+<label>Min: <input type="number" id="sizeMin"></label>
+<label>Max: <input type="number" id="sizeMax"></label>
+</div>
 
 <label><input type="radio" name="mode" value="include" checked> Include</label>
 <label><input type="radio" name="mode" value="exclude"> Exclude</label>
@@ -84,6 +101,5 @@
 </div>
 
 <script src="app.js"></script>
-
 </body>
 </html>
