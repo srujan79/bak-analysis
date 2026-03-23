@@ -42,20 +42,19 @@
 
 <h2>Backup Files Table</h2>
 
-<!-- ✅ Download Button -->
 <button id="downloadCsv">Download Filtered CSV</button>
 
 <table id="dataTable" class="display">
 <thead>
 <tr>
-<th>Hostname</th>
-<th>Customer</th>
-<th>PrivateIP</th>
-<th>Drive</th>
-<th>FileName</th>
-<th>FullPath</th>
-<th>Size (GB)</th>
-<th>LastModified</th>
+<th>Hostname <span class="filter-btn" data-col="0">🔽</span></th>
+<th>Customer <span class="filter-btn" data-col="1">🔽</span></th>
+<th>PrivateIP <span class="filter-btn" data-col="2">🔽</span></th>
+<th>Drive <span class="filter-btn" data-col="3">🔽</span></th>
+<th>FileName <span class="filter-btn" data-col="4">🔽</span></th>
+<th>FullPath <span class="filter-btn" data-col="5">🔽</span></th>
+<th>Size (GB) <span class="filter-btn" data-col="6">🔽</span></th>
+<th>LastModified <span class="filter-btn" data-col="7">🔽</span></th>
 </tr>
 
 <tr>
@@ -71,6 +70,25 @@
 </thead>
 <tbody></tbody>
 </table>
+
+<!-- FILTER POPUP -->
+<div id="filterPopup" class="filter-popup" style="display:none;">
+  <input type="text" id="filterSearch" placeholder="Search values...">
+
+  <div class="mode">
+    <label><input type="radio" name="mode" value="include" checked> Include</label>
+    <label><input type="radio" name="mode" value="exclude"> Exclude</label>
+  </div>
+
+  <div class="controls">
+    <button id="selectAll">Select All</button>
+    <button id="clearAll">Clear</button>
+  </div>
+
+  <div id="filterValues"></div>
+
+  <button id="applyFilter">Apply</button>
+</div>
 
 <script src="app.js"></script>
 
